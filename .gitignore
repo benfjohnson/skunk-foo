@@ -2,3 +2,6 @@ _site
 .sass-cache
 .jekyll-metadata
 dist
+node_modules
+public/js/**
+_src/elm-stuff

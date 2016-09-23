@@ -44,11 +44,12 @@ type Responses
 model : Model
 model =
     { posts =
-        [ Post "Sup" "1/2/15" (Responses [])
-        , Post "Hey Y'all" "3/19/16" (Responses [])
-        , Post "Sup" "1/2/15" (Responses [])
+        [ Post "What's up with airplane food???" "1/2/15" (Responses [])
+        , Post "YOLO YOLO YOLO" "3/19/16" (Responses [])
+        , Post "I'm jc u??" "1/2/15" (Responses [])
+        , Post "Hey guys crazy right?" "abcdefg" (Responses [])
         ]
-    , title = "Really Cool Page"
+    , title = "Really Cool Page Numba 123"
     }
 
 
@@ -59,8 +60,8 @@ model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ text model.title ]
-        , div [] (List.map (\post -> text post.message) model.posts)
+        [ h1 [] [ text model.title ]
+        , div [] (List.map (\post -> div [] [ text post.message ]) model.posts)
         ]
 
 

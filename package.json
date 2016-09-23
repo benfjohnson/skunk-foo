@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cd _src && elm-make _src/Main.elm --output ../_dist/elm.js && cd .. && jekyll serve"
+    "elm-watch": "cd _src && chokidar '**/*.elm' -c 'elm make Main.elm --output ../public/js/elm.js' --initial"
   },
   "repository": {
     "type": "git",
@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/benfjohnson/skunk-foo/issues"
   },
-  "homepage": "https://github.com/benfjohnson/skunk-foo#readme"
+  "homepage": "https://github.com/benfjohnson/skunk-foo#readme",
+  "devDependencies": {
+    "chokidar-cli": "^1.2.0",
+    "elm": "^0.17.1"
+  }
 }
