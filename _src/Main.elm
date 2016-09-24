@@ -1,7 +1,7 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text, h1)
-import Html.Attributes exposing (class)
+import Html exposing (Html, div, text, h1, a)
+import Html.Attributes exposing (class, href)
 import Date exposing (Date, fromString, now)
 import Navigation
 import Routing exposing (Route(..))
@@ -121,16 +121,22 @@ viewPostNotFound =
 viewPost : Post -> Html Msg
 viewPost post =
     div [ class "post-container" ]
-        [ text post.title
-        , post.date |> toString |> text
+        [ h1 [] [ text post.title ]
+        , div [] [ post.date |> toString |> text ]
+        , div [] [ text post.message ]
         ]
+
+
+viewPostLink : Post -> Html Msg
+viewPostLink post =
+    div [ class "post-container" ] [ a [ href ("#/post/" ++ toString post.id) ] [ text post.title ] ]
 
 
 viewPosts : Model -> Html Msg
 viewPosts model =
     div []
         [ h1 [] [ text model.pageTitle ]
-        , div [] (List.map viewPost model.posts)
+        , div [] (List.map viewPostLink model.posts)
         ]
 
 
