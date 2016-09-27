@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text, h1, a)
+import Html exposing (Html, div, text, h1, h2, a)
 import Html.Attributes exposing (class, href)
 import Date exposing (Date, fromString, now)
 import Navigation
@@ -57,7 +57,7 @@ type alias Post =
 
 type alias Comment =
     { message : String
-    , date : String
+    , date : Date
     , responses : Responses
     }
 
@@ -72,7 +72,7 @@ model initialRoute =
     , posts =
         [ Post 0 "Is Jameis a bust?" "I think he is dog whatchu think?" (getDate "07/06/16") (Responses [])
         , Post 1 "Tom Brady likes balls!!!" "...title says it all" (getDate "08/12/16") (Responses [])
-        , Post 2 "SEAAA---?" "hawks :*(" (getDate "01/31/16") (Responses [])
+        , Post 2 "SEAAA---?" "hawks :*(" (getDate "01/31/16") (Responses [ Comment "Sick dude" (getDate "08/09/16") (Responses []) ])
         , Post 3 "Hey guys crazy right?" "U seen dat??" (getDate "09/23/16") (Responses [])
         , Post 4 "Drew Brees seen doing hot yoga" "U seen dat??" (getDate "09/23/16") (Responses [])
         ]
@@ -118,12 +118,25 @@ viewPostNotFound =
     div [] [ text "Post not found!" ]
 
 
+viewComments : Responses -> Html Msg
+viewComments responses =
+    case responses of
+        Responses comments ->
+            div []
+                [ h2 [] [ text "Comments" ]
+                , div [] (List.map (\comment -> div [ class "post-container" ] [ text comment.message ]) comments)
+                ]
+
+
 viewPost : Post -> Html Msg
 viewPost post =
-    div [ class "post-container" ]
-        [ h1 [] [ text post.title ]
-        , div [] [ post.date |> toString |> text ]
-        , div [] [ text post.message ]
+    div []
+        [ div [ class "post-container" ]
+            [ h1 [] [ text post.title ]
+            , div [] [ post.date |> toString |> text ]
+            , div [] [ text post.message ]
+            ]
+        , viewComments post.comments
         ]
 
 
