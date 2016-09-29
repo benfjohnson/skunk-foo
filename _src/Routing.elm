@@ -6,17 +6,17 @@ import String
 
 
 type Route
-    = Posts
-    | Post Int
+    = PostsRoute
+    | PostRoute Int
     | RouteNotFound
 
 
 matchers : Parser (Route -> a) a
 matchers =
     oneOf
-        [ format Posts (s "")
-        , format Post (s "post" </> int)
-        , format Posts (s "posts")
+        [ format PostsRoute (s "")
+        , format PostRoute (s "post" </> int)
+        , format PostsRoute (s "posts")
         ]
 
 

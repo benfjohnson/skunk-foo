@@ -5,3 +5,4 @@ dist
 node_modules
 public/js/**
 _src/elm-stuff
+test-data

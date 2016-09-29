@@ -5,6 +5,10 @@ import Html.Attributes exposing (class, href)
 import Date exposing (Date, fromString, now)
 import Navigation
 import Routing exposing (Route(..))
+import Http
+import Task
+import Json.Decode exposing (..)
+import Json.Decode.Extra as DecodeExtra
 
 
 -- import Html.Events exposing (onClick)
@@ -30,19 +34,51 @@ getDate dateString =
 -- MODEL
 
 
+postsDecoder : Decoder (List Post)
+postsDecoder =
+    Json.Decode.list postDecoder
+
+
+postDecoder : Decoder (Post)
+postDecoder =
+    Json.Decode.object5 Post
+        ("id" := int)
+        ("title" := string)
+        ("message" := string)
+        ("date" := DecodeExtra.date)
+        ("comments" := commentsDecoder)
+
+
+commentsDecoder : Decoder (List Comment)
+commentsDecoder =
+    Json.Decode.list commentDecoder
+
+
+commentDecoder : Decoder Comment
+commentDecoder =
+    Json.Decode.object3 createComment
+        ("message" := string)
+        ("date" := DecodeExtra.date)
+        ("comments" := Json.Decode.list (DecodeExtra.lazy (\_ -> commentDecoder)))
+
+
 init : Result String Routing.Route -> ( Model, Cmd Msg )
 init result =
     let
         currentRoute =
             Routing.routeFromResult result
+
+        getPosts =
+            Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder "/test-data/test.json")
     in
-        ( model currentRoute, Cmd.none )
+        ( model currentRoute, getPosts )
 
 
 type alias Model =
     { pageTitle : String
     , posts : List Post
     , route : Routing.Route
+    , isLoading : Bool
     }
 
 
@@ -51,32 +87,33 @@ type alias Post =
     , title : String
     , message : String
     , date : Date
-    , comments : Responses
+    , comments : List Comment
     }
 
 
-type alias Comment =
-    { message : String
-    , date : Date
-    , responses : Responses
-    }
+
+-- createComment necessary because we're using TYPE as a constructor, not alias
 
 
-type Responses
-    = Responses (List Comment)
+createComment : String -> Date -> List Comment -> Comment
+createComment m d c =
+    Comment { message = m, date = d, comments = c }
+
+
+type Comment
+    = Comment
+        { message : String
+        , date : Date
+        , comments : List Comment
+        }
 
 
 model : Routing.Route -> Model
 model initialRoute =
     { pageTitle = "National Football League"
-    , posts =
-        [ Post 0 "Is Jameis a bust?" "I think he is dog whatchu think?" (getDate "07/06/16") (Responses [])
-        , Post 1 "Tom Brady likes balls!!!" "...title says it all" (getDate "08/12/16") (Responses [])
-        , Post 2 "SEAAA---?" "hawks :*(" (getDate "01/31/16") (Responses [ Comment "Sick dude" (getDate "08/09/16") (Responses []) ])
-        , Post 3 "Hey guys crazy right?" "U seen dat??" (getDate "09/23/16") (Responses [])
-        , Post 4 "Drew Brees seen doing hot yoga" "U seen dat??" (getDate "09/23/16") (Responses [])
-        ]
+    , posts = []
     , route = initialRoute
+    , isLoading = False
     }
 
 
@@ -87,10 +124,10 @@ model initialRoute =
 viewPage : Model -> Html Msg
 viewPage model =
     case model.route of
-        Posts ->
+        PostsRoute ->
             viewPosts model
 
-        Post id ->
+        PostRoute id ->
             let
                 maybePost =
                     model.posts
@@ -118,14 +155,20 @@ viewPostNotFound =
     div [] [ text "Post not found!" ]
 
 
-viewComments : Responses -> Html Msg
-viewComments responses =
-    case responses of
-        Responses comments ->
-            div []
-                [ h2 [] [ text "Comments" ]
-                , div [] (List.map (\comment -> div [ class "post-container" ] [ text comment.message ]) comments)
-                ]
+viewComments : List Comment -> Html Msg
+viewComments comments =
+    div []
+        [ h2 [] [ text "Comments" ]
+        , div []
+            (List.map
+                (\comment ->
+                    case comment of
+                        Comment cmt ->
+                            div [ class "post-container" ] [ text cmt.message ]
+                )
+                comments
+            )
+        ]
 
 
 viewPost : Post -> Html Msg
@@ -161,6 +204,9 @@ type Msg
     = NoOp
     | Upvote String
     | Downvote String
+    | FetchPosts
+    | FetchPostsSuccess (List Post)
+    | FetchPostsError Http.Error
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -173,6 +219,15 @@ update msg model =
             ( model, Cmd.none )
 
         Downvote postId ->
+            ( model, Cmd.none )
+
+        FetchPosts ->
+            ( { model | isLoading = True }, Cmd.none )
+
+        FetchPostsSuccess posts ->
+            ( { model | posts = posts }, Cmd.none )
+
+        _ ->
             ( model, Cmd.none )
 
 
