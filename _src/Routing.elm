@@ -9,6 +9,7 @@ type Route
     = PostsRoute
     | PostRoute Int
     | RouteNotFound
+    | NewPostRoute
 
 
 matchers : Parser (Route -> a) a
@@ -17,6 +18,7 @@ matchers =
         [ format PostsRoute (s "")
         , format PostRoute (s "post" </> int)
         , format PostsRoute (s "posts")
+        , format NewPostRoute (s "new")
         ]
 
 

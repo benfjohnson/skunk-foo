@@ -1,7 +1,8 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text, h1, h2, a)
+import Html exposing (Html, div, text, h1, h2, h3, a, input, button)
 import Html.Attributes exposing (class, href)
+import Html.Events exposing (onClick)
 import Date exposing (Date, fromString, now)
 import Navigation
 import Routing exposing (Route(..))
@@ -11,7 +12,7 @@ import Json.Decode exposing (..)
 import Json.Decode.Extra as DecodeExtra
 
 
--- import Html.Events exposing (onClick)
+-- Main and initial setup
 
 
 main : Program Never
@@ -28,10 +29,6 @@ main =
 getDate : String -> Date
 getDate dateString =
     dateString |> Date.fromString |> Result.withDefault (Date.fromTime 0)
-
-
-
--- MODEL
 
 
 postsDecoder : Decoder (List Post)
@@ -72,6 +69,10 @@ init result =
             Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder "/test-data/test.json")
     in
         ( model currentRoute, getPosts )
+
+
+
+-- MODEL
 
 
 type alias Model =
@@ -141,6 +142,9 @@ viewPage model =
                     Nothing ->
                         viewPostNotFound
 
+        NewPostRoute ->
+            h1 [] [ text "NEW POST" ]
+
         RouteNotFound ->
             viewRouteNotFound
 
@@ -158,17 +162,18 @@ viewPostNotFound =
 viewComments : List Comment -> Html Msg
 viewComments comments =
     div []
-        [ h2 [] [ text "Comments" ]
-        , div []
-            (List.map
-                (\comment ->
-                    case comment of
-                        Comment cmt ->
-                            div [ class "post-container" ] [ text cmt.message ]
-                )
-                comments
-            )
+        [ div [] (List.map viewComment comments)
         ]
+
+
+viewComment : Comment -> Html Msg
+viewComment comment =
+    case comment of
+        Comment cmt ->
+            div [ class "post-container" ]
+                [ h3 [] [ text cmt.message ]
+                , (viewComments cmt.comments)
+                ]
 
 
 viewPost : Post -> Html Msg
@@ -179,6 +184,7 @@ viewPost post =
             , div [] [ post.date |> toString |> text ]
             , div [] [ text post.message ]
             ]
+        , h2 [] [ text "Comments" ]
         , viewComments post.comments
         ]
 
@@ -190,9 +196,19 @@ viewPostLink post =
 
 viewPosts : Model -> Html Msg
 viewPosts model =
-    div []
-        [ h1 [] [ text model.pageTitle ]
-        , div [] (List.map viewPostLink model.posts)
+    div [ class "row" ]
+        [ div [ class "col-sm-9" ]
+            [ h1 [] [ text model.pageTitle ]
+            , div [] (List.map viewPostLink model.posts)
+            ]
+        , viewSidebar
+        ]
+
+
+viewSidebar : Html Msg
+viewSidebar =
+    div [ class "col-sm-3" ]
+        [ a [ href "/#/new" ] [ text "Submit new post!" ]
         ]
 
 
