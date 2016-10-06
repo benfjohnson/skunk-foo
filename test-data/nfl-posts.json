@@ -11,7 +11,19 @@
     "title": "Tom Brady likes balls!!!",
     "message": "...title says it all",
     "date": "08/12/16",
-    "comments": []
+    "comments": [
+      {
+        "message": "Wha wha wee wa?",
+        "date": "08/29/16",
+        "comments": [
+          {
+            "message": "Dude what does this even mean?",
+            "date": "09/01/16",
+            "comments": []
+          }
+        ]
+      }
+    ]
   },
   {
     "id": 2,

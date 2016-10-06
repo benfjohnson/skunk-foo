@@ -2,7 +2,10 @@ module Main exposing (..)
 
 import Html exposing (Html, div, text, h1, h2, h3, a, input, button)
 import Html.Attributes exposing (class, href)
-import Html.Events exposing (onClick)
+
+
+-- import Html.Events exposing (onClick)
+
 import Date exposing (Date, fromString, now)
 import Navigation
 import Routing exposing (Route(..))
@@ -12,7 +15,7 @@ import Json.Decode exposing (..)
 import Json.Decode.Extra as DecodeExtra
 
 
--- Main and initial setup
+-- MAIN
 
 
 main : Program Never
@@ -26,49 +29,13 @@ main =
         }
 
 
-getDate : String -> Date
-getDate dateString =
-    dateString |> Date.fromString |> Result.withDefault (Date.fromTime 0)
-
-
-postsDecoder : Decoder (List Post)
-postsDecoder =
-    Json.Decode.list postDecoder
-
-
-postDecoder : Decoder (Post)
-postDecoder =
-    Json.Decode.object5 Post
-        ("id" := int)
-        ("title" := string)
-        ("message" := string)
-        ("date" := DecodeExtra.date)
-        ("comments" := commentsDecoder)
-
-
-commentsDecoder : Decoder (List Comment)
-commentsDecoder =
-    Json.Decode.list commentDecoder
-
-
-commentDecoder : Decoder Comment
-commentDecoder =
-    Json.Decode.object3 createComment
-        ("message" := string)
-        ("date" := DecodeExtra.date)
-        ("comments" := Json.Decode.list (DecodeExtra.lazy (\_ -> commentDecoder)))
-
-
 init : Result String Routing.Route -> ( Model, Cmd Msg )
 init result =
     let
         currentRoute =
             Routing.routeFromResult result
-
-        getPosts =
-            Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder "/test-data/test.json")
     in
-        ( model currentRoute, getPosts )
+        urlUpdate result (model currentRoute)
 
 
 
@@ -93,7 +60,7 @@ type alias Post =
 
 
 
--- createComment necessary because we're using TYPE as a constructor, not alias
+-- createComment necessary because comment is a type and not type alias (due to recursiveness)
 
 
 createComment : String -> Date -> List Comment -> Comment
@@ -125,7 +92,10 @@ model initialRoute =
 viewPage : Model -> Html Msg
 viewPage model =
     case model.route of
-        PostsRoute ->
+        AllPostsRoute ->
+            viewPosts model
+
+        PostsRoute _ ->
             viewPosts model
 
         PostRoute id ->
@@ -171,7 +141,7 @@ viewComment comment =
     case comment of
         Comment cmt ->
             div [ class "post-container" ]
-                [ h3 [] [ text cmt.message ]
+                [ div [] [ text cmt.message ]
                 , (viewComments cmt.comments)
                 ]
 
@@ -256,5 +226,80 @@ urlUpdate result model =
     let
         currentRoute =
             Routing.routeFromResult result
+
+        getCmd route =
+            case route of
+                AllPostsRoute ->
+                    getAllPosts
+
+                PostsRoute subName ->
+                    getPostsBySubreddit subName
+
+                _ ->
+                    Cmd.none
     in
-        ( { model | route = currentRoute }, Cmd.none )
+        ( { model | route = currentRoute }, getCmd currentRoute )
+
+
+getDate : String -> Date
+getDate dateString =
+    dateString |> Date.fromString |> Result.withDefault (Date.fromTime 0)
+
+
+postsDecoder : Decoder (List Post)
+postsDecoder =
+    Json.Decode.list postDecoder
+
+
+postDecoder : Decoder (Post)
+postDecoder =
+    Json.Decode.object5 Post
+        ("id" := int)
+        ("title" := string)
+        ("message" := string)
+        ("date" := DecodeExtra.date)
+        ("comments" := commentsDecoder)
+
+
+commentsDecoder : Decoder (List Comment)
+commentsDecoder =
+    Json.Decode.list commentDecoder
+
+
+commentDecoder : Decoder Comment
+commentDecoder =
+    Json.Decode.object3 createComment
+        ("message" := string)
+        ("date" := DecodeExtra.date)
+        ("comments" := Json.Decode.list (DecodeExtra.lazy (\_ -> commentDecoder)))
+
+
+
+-- HTTP CALLS
+
+
+getPosts : String -> Cmd Msg
+getPosts subReddit =
+    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder subReddit)
+
+
+getAllPosts : Cmd Msg
+getAllPosts =
+    getPosts "/test-data/all-posts.json"
+
+
+
+-- NOTE: This wouldn't normally hardcode a path, just pass a subReddit name to getPosts. Need to refactor once better architecture
+
+
+getPostsBySubreddit : String -> Cmd Msg
+getPostsBySubreddit subRedditName =
+    case subRedditName of
+        "nfl" ->
+            getPosts "/test-data/nfl-posts.json"
+
+        "food" ->
+            getPosts "/test-data/food-posts.json"
+
+        _ ->
+            Cmd.none
