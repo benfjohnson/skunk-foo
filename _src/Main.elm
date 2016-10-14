@@ -235,6 +235,9 @@ urlUpdate result model =
                 PostsRoute subName ->
                     getPostsBySubreddit subName
 
+                PostRoute id ->
+                    getPostById id
+
                 _ ->
                     Cmd.none
     in
@@ -286,6 +289,11 @@ getPosts subReddit =
 getAllPosts : Cmd Msg
 getAllPosts =
     getPosts "/test-data/all-posts.json"
+
+
+getPostById : Int -> Cmd Msg
+getPostById id =
+    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder ("/test-data/post-" ++ toString id ++ ".json"))
 
 
 
