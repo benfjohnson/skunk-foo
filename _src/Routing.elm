@@ -8,7 +8,7 @@ import String
 type Route
     = AllPostsRoute
     | PostsRoute String
-    | PostRoute Int
+    | PostRoute String
     | RouteNotFound
     | NewPostRoute
 
@@ -17,7 +17,7 @@ matchers : Parser (Route -> a) a
 matchers =
     oneOf
         [ format AllPostsRoute (s "")
-        , format PostRoute (s "post" </> int)
+        , format PostRoute (s "post" </> string)
         , format AllPostsRoute (s "all")
         , format NewPostRoute (s "new")
         , format PostsRoute string

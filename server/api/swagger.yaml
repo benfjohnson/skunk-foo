@@ -1,0 +1,103 @@
+---
+swagger: "2.0"
+info:
+  description: "Elmmit yo"
+  version: "1.0.0"
+  title: "Elmmit API"
+host: "elmitt.io"
+basePath: "/api"
+schemes:
+- "http"
+produces:
+- "application/json"
+paths:
+  /posts:
+    get:
+      tags:
+      - "Posts"
+      summary: "Retrieve all posts"
+      description: "Retrieves all posts matching the filter criteria\n"
+      operationId: "postsGET"
+      parameters:
+      - name: "subreddit"
+        in: "query"
+        description: "Allows for querying based on subreddit"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "An array of posts"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Post"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "Posts"
+  /posts/{id}:
+    get:
+      tags:
+      - "Posts"
+      summary: "Retrieves post with a specific id"
+      description: "Retrieves post with a specific id"
+      operationId: "postsIdGET"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "id of the post we want to retrieve"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "An array of posts"
+          schema:
+            $ref: "#/definitions/Post"
+        default:
+          description: "Unexpected error"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "Posts"
+definitions:
+  Post:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        description: "Uniquely identifies a Post object."
+      subreddit:
+        type: "string"
+        description: "The Subreddit the post is a member of."
+      title:
+        type: "string"
+        description: "Post title."
+      message:
+        type: "string"
+        description: "The Post content."
+      date:
+        type: "string"
+        description: "The Post date."
+      comments:
+        type: "array"
+        items:
+          $ref: "#/definitions/Comment"
+  Comment:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        description: "The Comment content."
+      date:
+        type: "string"
+        description: "The Comment date."
+  Error:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      message:
+        type: "string"
+      fields:
+        type: "string"

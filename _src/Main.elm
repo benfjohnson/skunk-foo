@@ -51,7 +51,7 @@ type alias Model =
 
 
 type alias Post =
-    { id : Int
+    { id : String
     , title : String
     , message : String
     , date : Date
@@ -78,11 +78,26 @@ type Comment
 
 model : Routing.Route -> Model
 model initialRoute =
-    { pageTitle = "National Football League"
-    , posts = []
-    , route = initialRoute
-    , isLoading = False
-    }
+    let
+        title =
+            case initialRoute of
+                AllPostsRoute ->
+                    "Elmmit"
+
+                PostsRoute _ ->
+                    "Posts"
+
+                PostRoute _ ->
+                    "Post"
+
+                _ ->
+                    "Hey"
+    in
+        { pageTitle = title
+        , posts = []
+        , route = initialRoute
+        , isLoading = False
+        }
 
 
 
@@ -161,7 +176,7 @@ viewPost post =
 
 viewPostLink : Post -> Html Msg
 viewPostLink post =
-    div [ class "post-container" ] [ a [ href ("#/post/" ++ toString post.id) ] [ text post.title ] ]
+    div [ class "post-container" ] [ a [ href ("#/post/" ++ post.id) ] [ text post.title ] ]
 
 
 viewPosts : Model -> Html Msg
@@ -257,7 +272,7 @@ postsDecoder =
 postDecoder : Decoder (Post)
 postDecoder =
     Json.Decode.object5 Post
-        ("id" := int)
+        ("id" := string)
         ("title" := string)
         ("message" := string)
         ("date" := DecodeExtra.date)
@@ -282,18 +297,18 @@ commentDecoder =
 
 
 getPosts : String -> Cmd Msg
-getPosts subReddit =
-    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder subReddit)
+getPosts apiPath =
+    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder apiPath)
 
 
 getAllPosts : Cmd Msg
 getAllPosts =
-    getPosts "/test-data/all-posts.json"
+    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder "http://localhost:3000/api/posts")
 
 
-getPostById : Int -> Cmd Msg
+getPostById : String -> Cmd Msg
 getPostById id =
-    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder ("/test-data/post-" ++ toString id ++ ".json"))
+    Task.perform FetchPostsError FetchPostsSuccess (Http.get postsDecoder ("http://localhost:3000/api/posts/" ++ id))
 
 
 
@@ -301,13 +316,5 @@ getPostById id =
 
 
 getPostsBySubreddit : String -> Cmd Msg
-getPostsBySubreddit subRedditName =
-    case subRedditName of
-        "nfl" ->
-            getPosts "/test-data/nfl-posts.json"
-
-        "food" ->
-            getPosts "/test-data/food-posts.json"
-
-        _ ->
-            Cmd.none
+getPostsBySubreddit subredditName =
+    getPosts ("http://localhost:3000/api/posts?subreddit=" ++ subredditName)
